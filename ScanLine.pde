@@ -11,10 +11,11 @@ class ScanLine {
     this.thickness = 5;
   }
 
+  public ScanLine(Vec2D a, Vec2D b, float thick) {
+    this(a.x, a.y, b.x, b.y, thick);  
+  }
   public ScanLine(float a1, float a2, float b1, float b2) {
-    this.p1 = new PVector(a1, a2);
-    this.p2 = new PVector(b1, b2);
-    this.thickness = 5;
+    this(a1, a2, b1, b2, 5);
   }
   
   public ScanLine(float a1, float a2, float b1, float b2, float thick) {

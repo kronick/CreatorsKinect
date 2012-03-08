@@ -12,6 +12,8 @@ class KinectManager {
   ArrayList<ScanLine> scanLines;
   PVector handPosition, oldHandPosition;
   
+  float scaleFactor = 1;
+  
   public KinectManager(CreatorsKinect applet) {
     this.applet = applet;
     kinect = new SimpleOpenNI(applet);
@@ -28,6 +30,7 @@ class KinectManager {
       //exit();
       //return;
       simulate = true;
+      scaleFactor = 1;
     }
     else {
       kinect.setMirror(true);
@@ -44,6 +47,9 @@ class KinectManager {
       flowRouter = new XnVFlowRouter();
       flowRouter.SetActive(pointDrawer);
       sessionManager.AddListener(flowRouter);
+
+      kinect.update();
+      scaleFactor = width / kinect.depthImage().width;
     }    
   }
   
@@ -67,6 +73,8 @@ class KinectManager {
       
       int gapLimit = 5;
       int scanSpacing = 6;
+      
+      ArrayList<Vec3D> activeHands = new ArrayList<Vec3D>();
       
       //depthMap.loadPixels();
       for(int y=0; y<depthMap.height; y+=scanSpacing) {
@@ -100,7 +108,13 @@ class KinectManager {
           
           if(endLine) {
             if(lineStart > -1) {
-              ScanLine s = new ScanLine(lineStart, y, lineEnd,y, scanSpacing);
+              Vec2D endpointA = scaleToScreen(new Vec2D(lineStart, y));
+              Vec2D endpointB = scaleToScreen(new Vec2D(lineEnd,   y));
+              
+              ScanLine s = new ScanLine(endpointA, endpointB, scanSpacing);
+              
+              activeHands.add(new Vec3D(endpointA.x, endpointA.y, 1600));
+              activeHands.add(new Vec3D(endpointB.x, endpointB.y, 1600));
               colorMode(HSB);
               s.lineColor = color(100+(avgDepth/(float)lineLength) * 155,255, 255);
               scanLines.add(s);
@@ -116,11 +130,13 @@ class KinectManager {
         lineLength = 0;
         avgDepth = 0;
       }    
+      
+      applet.handTracker.updateHands(activeHands);
     }
     else {
       ArrayList<Vec3D> activeHands = new ArrayList<Vec3D>();
       activeHands.add(new Vec3D(mouseX, mouseY, 1000));
-      applet.photoArranger.updateHands(activeHands);
+      applet.handTracker.updateHands(activeHands);
     }
   }
   
@@ -142,6 +158,22 @@ class KinectManager {
       //pointDrawer.draw();
     }
   }
+  
+  float scaleToScreen(float x) {
+    return x * scaleFactor;
+  }  
+  float scaleToScreen(int x) {
+    return x * scaleFactor;
+  }
+  PVector scaleToScreen(PVector p) {
+    return new PVector(scaleToScreen(p.x), scaleToScreen(p.y));
+  }
+  Vec2D scaleToScreen(Vec2D p) {
+    return new Vec2D(scaleToScreen(p.x), scaleToScreen(p.y));
+  }
+  Vec3D scaleToScreen(Vec3D p) {
+    return new Vec3D(scaleToScreen(p.x), scaleToScreen(p.y), p.z);
+  }  
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -245,8 +277,7 @@ class PointDrawer extends XnVPointControl {
         PVector screenPos = new PVector(0,0); 
         if(firstVec != null) {
           parent.kinect.convertRealWorldToProjective(firstVec,screenPos);
-          activeHands.add(new Vec3D(screenPos.x*2, screenPos.y*2, screenPos.z));
-          point(screenPos.x,screenPos.y);
+          activeHands.add(parent.scaleToScreen(new Vec3D(screenPos.x, screenPos.y, screenPos.z)));
         }
       }
       
@@ -255,52 +286,6 @@ class PointDrawer extends XnVPointControl {
   }
   
   public void draw() {
-    if(_pointLists.size() <= 0)
-      return;
-      
-    pushStyle();
-      noFill();
-      
-      PVector vec;
-      PVector firstVec;
-      PVector screenPos = new PVector();
-      int colorIndex=0;
-      
-      // draw the hand lists
-      Iterator<Map.Entry> itrList = _pointLists.entrySet().iterator();
-      while(itrList.hasNext()) 
-      {
-        strokeWeight(8);
-        stroke(_colorList[colorIndex % (_colorList.length - 1)]);
-
-        ArrayList curList = (ArrayList)itrList.next().getValue();     
-        
-        // draw line
-        firstVec = null;
-        Iterator<PVector> itr = curList.iterator();
-        beginShape();
-          while (itr.hasNext()) 
-          {
-            vec = itr.next();
-            if(firstVec == null)
-              firstVec = vec;
-            // calc the screen pos
-            parent.kinect.convertRealWorldToProjective(vec,screenPos);
-            vertex(screenPos.x,screenPos.y);    
-          } 
-        endShape();   
-  
-        // draw current pos of the hand
-        if(firstVec != null)
-        {
-          strokeWeight(10);
-          parent.kinect.convertRealWorldToProjective(firstVec,screenPos);
-          point(screenPos.x,screenPos.y);
-        }
-        colorIndex++;
-      }
-      
-    popStyle();
   }
 
 }

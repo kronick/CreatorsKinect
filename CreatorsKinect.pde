@@ -73,9 +73,9 @@ void draw(){
   renderer.endGL();
   
   pushMatrix();
-  scale(2);
+  //scale(2);
   //stroke(255,0,128);
-  kinectManager.draw();
+  //kinectManager.draw();
   popMatrix();
   
   handTracker.draw();

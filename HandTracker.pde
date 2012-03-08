@@ -15,7 +15,7 @@ class HandTracker {
    
     physics = new VerletPhysics2D();
     physics.setDrag(0.1);
-    physics.setWorldBounds(new Rect(0,0, width, height)); 
+    //physics.setWorldBounds(new Rect(0,0, width, height)); 
     physics.setNumIterations(1);
 
     noise = new PerlinNoise();
@@ -25,6 +25,8 @@ class HandTracker {
   }
   
   void updateHands(ArrayList<Vec3D> handPositions) {
+    applet.photoArranger.updateHands(handPositions);
+    
     for(int i=0; i<handPositions.size(); i++) {
       Vec2D velocity = new Vec2D(0,0);
       if(i < oldHandPositions.size()) {
@@ -34,11 +36,13 @@ class HandTracker {
       }
       
       AgingParticle _p = new AgingParticle(handPositions.get(i).x + random(-5,5), handPositions.get(i).y + random(-5,5), (int)random(30,100));
-      particles.add(_p);  
-      physics.addParticle(_p);
-      _p.addVelocity(velocity);
-      float m = velocity.magnitude() + 0.1;
-      _p.addVelocity(new Vec2D(random(-m,m), random(-m,m)));
+      if(random(0,10) < 1) {
+        particles.add(_p);  
+        physics.addParticle(_p);
+      }
+      //_p.addVelocity(velocity);
+      //float m = velocity.magnitude() + 0.1;
+      //_p.addVelocity(new Vec2D(random(-m,m), random(-m,m)));
       println("Adding particle velocity: ");
     }
     

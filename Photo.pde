@@ -5,6 +5,7 @@ class Photo extends VerletParticle2D implements Runnable {
   float positionK = 0.1;
   boolean hasMoved = false;
   float size;
+  float scale = 1;
   
   float z = 0;
   
@@ -233,7 +234,7 @@ class Photo extends VerletParticle2D implements Runnable {
     float a = cos(radians(angleY));
     float b = sin(radians(angleY)); 
     //float g = -parent.gridSpace/2 * zoomLevel;
-    float g = -size/2 * zoomLevel;
+    float g = -(size*scale)/2 * zoomLevel;
     
     texturedQuad.beginUpdateVertices();
       texturedQuad.updateVertex(0, x,y);  // Center point
