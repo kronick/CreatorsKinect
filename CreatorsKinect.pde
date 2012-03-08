@@ -17,6 +17,9 @@ HandTracker handTracker;
 
 GLGraphics renderer;
 
+PImage[] staticImages;
+int staticImageIndex = 0;
+
 PFont infoFont;
 
 int depthThreshold = 2000;
@@ -28,6 +31,8 @@ void setup() {
 
   kinectManager = new KinectManager(this);
   handTracker = new HandTracker(this);
+ 
+  generateStatic();
  
   background(200,0,0);
   //size(kinect.depthWidth(), kinect.depthHeight());
@@ -42,11 +47,16 @@ void setup() {
   textFont(infoFont);
 
   photoArranger = new PhotoArranger(this);
+  
+  frameRate(60);
 }
 
 void draw(){
+  println(frameRate);
   background(0);
-  
+  if(frameCount % 3 == 0) staticImageIndex = (int)random(0,staticImages.length);
+  image(staticImages[staticImageIndex], 0,0);
+
   kinectManager.update();
   handTracker.update();
   
@@ -78,3 +88,17 @@ void keyPressed() {
   if(key == ',') depthThreshold -= 20;
 }
 
+
+void generateStatic() {
+  staticImages = new PImage[10];
+  int gray = 0;
+  for(int i=0; i<staticImages.length; i++) {
+    staticImages[i] = createImage(width, height, RGB);
+    staticImages[i].loadPixels();
+    for(int p=0; p<staticImages[i].pixels.length; p++) {
+      gray = (int)random(0,100);
+      staticImages[i].pixels[p] = color(gray, gray, gray);
+    }
+    staticImages[i].updatePixels();
+  }  
+}

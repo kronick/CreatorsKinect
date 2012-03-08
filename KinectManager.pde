@@ -48,6 +48,7 @@ class KinectManager {
   }
   
   public void update() {
+    if(frameCount % 2 == 0) return;
     if(!simulate) {
       // update the cam
       kinect.update();
