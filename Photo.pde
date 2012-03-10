@@ -1,11 +1,17 @@
 class Photo extends VerletParticle2D implements Runnable {
   //PVector position, oldPosition, positionTarget;
   //PVector velocity;
+  int id = 1;
   float velocityDamping = 0.85;
   float positionK = 0.1;
   boolean hasMoved = false;
   float size;
   float scale = 1;
+  float scaleK = 0.01;
+  
+  float opacity = 1;
+  
+  float scaleTarget = 1;
   
   float z = 0;
   
@@ -34,8 +40,11 @@ class Photo extends VerletParticle2D implements Runnable {
 
   int age = 1;
   int flipStep = 0;
-  float angleY = 0;
-  float angleX = 0;
+  float angleY = 0; float angleYTarget = 0;
+  float angleX = 0; float angleXTarget = 0;
+  float angleK = 0.03;
+  float flipY = 0;
+  float flipX = 0;
   boolean flipping = false;
   boolean flipSoon = false;  // If true, will flip at next possible chance (after other side is loaded)
   int flipDirection;
@@ -74,9 +83,10 @@ class Photo extends VerletParticle2D implements Runnable {
      this.backCaption = "";
      
      texturedQuad = new GLModel(parent.applet, 6, GLModel.TRIANGLE_FAN, GLModel.DYNAMIC);
+     texturedQuad.initColors();
      setVertices();
      texturedQuad.initTextures(1);  // Reserve room for 1 texture on the graphics card
-     
+      
      GLTextureParameters texParam = new GLTextureParameters();
      //texParam.magFilter = GLTextureParameters.LINEAR;
      //texParam.minFilter = GLTextureParameters.LINEAR;
@@ -164,6 +174,15 @@ class Photo extends VerletParticle2D implements Runnable {
     
     // Figure out which side is showing
     // --------------------------------
+    // if(flipStep >= 90) side = -1;
+    // else side = 1;
+    
+    flipY = tweenEaseInOutBack(flipStep, 180, 0, 180, 0.5);
+    
+    angleY += (angleYTarget - angleY) * angleK;
+    angleX += (angleXTarget - angleX) * angleK;
+    
+    //if(angleY + flipY >= 90) side = -1;
     if(flipStep >= 90) side = -1;
     else side = 1;
     
@@ -171,10 +190,7 @@ class Photo extends VerletParticle2D implements Runnable {
       // Update texture coordinates to flip if necessary
       setTexCoords();    
  
-    lastSide = side;
-    
-    //angleY = (cos(radians(flipStep))+1)/2*180 - 180;  // Ease in-out
-    angleY = tweenEaseInOutBack(flipStep, 180, 0, 180, 0.5);
+    lastSide = side;    
     
     // ZOOM STUFF
     // ----------
@@ -195,6 +211,8 @@ class Photo extends VerletParticle2D implements Runnable {
       zoomStep = 180;
     }
     
+    scale += (scaleTarget - scale) * scaleK;
+    
     /*
     velocity.x *= velocityDamping;
     velocity.y *= velocityDamping;
@@ -210,8 +228,7 @@ class Photo extends VerletParticle2D implements Runnable {
     oldPosition = position.get();
     */
     
-    //if(flipping || zooming || hasMoved)
-      setVertices();
+    setVertices();
   }
   
   void setTexCoords() {
@@ -231,8 +248,8 @@ class Photo extends VerletParticle2D implements Runnable {
   }
   
   void setVertices() {
-    float a = cos(radians(angleY));
-    float b = sin(radians(angleY)); 
+    float a = cos(radians(angleY+flipY));
+    float b = sin(radians(angleY+flipY)); 
     //float g = -parent.gridSpace/2 * zoomLevel;
     float g = -(size*scale)/2 * zoomLevel;
     
@@ -244,6 +261,12 @@ class Photo extends VerletParticle2D implements Runnable {
       texturedQuad.updateVertex(4, -g*a + x,  g + b*g*PERSPECTIVE_FACTOR + y);
       texturedQuad.updateVertex(5, g*a + x,  g - b*g*PERSPECTIVE_FACTOR + y); 
     texturedQuad.endUpdateVertices();
+    
+    texturedQuad.beginUpdateColors();
+    for (int i = 0; i < 6; i++) {
+      texturedQuad.updateColor(i,255,0,255, opacity * 255);
+    }
+    texturedQuad.endUpdateColors();     
   }
   
   void draw() {
@@ -251,7 +274,7 @@ class Photo extends VerletParticle2D implements Runnable {
     
     noStroke();
     //stroke(255);
-    fill(255,255,255,100);
+    //tint(255,255,255,100);
 
     texturedQuad.render();
   }
@@ -288,17 +311,17 @@ class Photo extends VerletParticle2D implements Runnable {
     changeImage(_url, false);
   }
   
-  void changeImage(String _url, boolean _zoomOnLoad) {
-    changeImage(_url, _zoomOnLoad, false);
+  void changeImage(String _url, boolean _flipOnLoad) {
+    changeImage(_url, _flipOnLoad, false);
   }
-  void changeImage(String _url, boolean _zoomOnLoad, boolean brandNew) {
-    flipSoon = true;
-    zoomOnLoad = _zoomOnLoad;
+  void changeImage(String _url, boolean _flipOnLoad, boolean brandNew) {
+    flipSoon = _flipOnLoad;
+    //zoomOnLoad = _zoomOnLoad;
     
     downloadNextImage(_url);
     age = 0;
     
-    if(zoomOnLoad) visitMe(brandNew);
+    //if(zoomOnLoad) visitMe(brandNew);
     
     //parent.focusTarget = grid.getCenter(this);
     //parent.focusZoom = random(.75,2);
@@ -321,15 +344,15 @@ class Photo extends VerletParticle2D implements Runnable {
   }
   
   void run() {
-    try {
-      while(flipping) Thread.sleep(10);  // Wait until flipping is done
-    }
-    catch(InterruptedException e) { }
-    
     // Reserve the next photo to be loaded
     int newIndex = parent.loader.photoStack.indexOf(nextURL);
     if(newIndex > -1)
       parent.loader.availability.set(newIndex, false);// = Boolean.FALSE;
+
+    try {
+      while(flipping) Thread.sleep(10);  // Wait until flipping is done
+    }
+    catch(InterruptedException e) { }
 
     if(side > 0 && !backLoading) {
       // Currently on front, transition to back

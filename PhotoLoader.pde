@@ -2,7 +2,8 @@ import org.json.*;
 import java.util.*;
 
 class PhotoLoader implements Runnable {
-  String[] feeds = {"https://api.instagram.com/v1/tags/creators/media/recent?access_token=19453848.e3ef9b3.028791cb4f1743d0a59da2eba059786a"};
+  //String[] feeds = {"https://api.instagram.com/v1/tags/food/media/recent?access_token=19453848.e3ef9b3.028791cb4f1743d0a59da2eba059786a"};
+  String[] feeds = {"https://api.instagram.com/v1/users/1885828/media/recent?access_token=19453848.e3ef9b3.028791cb4f1743d0a59da2eba059786a"};
   int[] feedCount = {0};
   float[] feedBalance = {1};
 
@@ -65,10 +66,11 @@ class PhotoLoader implements Runnable {
       float balanceFraction = feedBalance[i] / totalBalance;
       int balanceLimit = (int)(photoStack.size() < MIN_STACK_SIZE ? balanceFraction * MIN_STACK_SIZE :
                                (photoStack.size() * balanceFraction - feedCount[i]));
+      if(feeds.length == 1) balanceLimit = MAX_INT;
       int newPhotos = loadPhotos(feeds[i], 20, MIN_STACK_SIZE, balanceLimit);
       feedCount[i] += newPhotos;
       //if(newPhotos > 0)
-        println(newPhotos + " added from feed " + i);
+      println(newPhotos + " added from feed " + i);
     }
     
     lastUpdateTime = millis();
@@ -84,6 +86,8 @@ class PhotoLoader implements Runnable {
     int newPhotos = 0;    
     int retrieved = 0;
     String max_id = "";
+    ArrayList<Photo> newPhotoList = new ArrayList<Photo>();
+    
     while((photoStack.size() < keepFull || retrieved < atATime) && newPhotos < limit) {
       print(".");
       boolean lastPage = false;
@@ -93,8 +97,8 @@ class PhotoLoader implements Runnable {
         JSONObject jsonObj = new JSONObject(json);
         JSONArray photosArray = jsonObj.getJSONArray("data");
         try {
-          //max_id = jsonObj.getJSONObject("pagination").getString("next_max_id");
-          max_id = jsonObj.getJSONObject("pagination").getString("next_max_tag_id");
+          max_id = jsonObj.getJSONObject("pagination").getString("next_max_id");
+          //max_id = jsonObj.getJSONObject("pagination").getString("next_max_tag_id");
         }
         catch (JSONException e) { println("Last Page"); lastPage = true; }
         
@@ -129,11 +133,12 @@ class PhotoLoader implements Runnable {
             if(initialLoad)
               p = parent.emptyPhoto();
             else
-              p = parent.randomPhoto(10, true);
+              p = parent.randomPhoto(10, false);
               
             if(p != null) {  // Ok, this is a good new photo
               // Tell the selected grid space to change its image
-              p.changeImage(url, !initialLoad, !initialLoad);
+              p.changeImage(url, initialLoad, !initialLoad);
+              newPhotoList.add(p);
               //print(".");
             }
             
@@ -147,6 +152,13 @@ class PhotoLoader implements Runnable {
       }
       
       if(lastPage) break;
+    }
+    
+    // Add the new photos to the entrance stack in reverse order
+    if(!initialLoad) {
+      for(int i=newPhotoList.size()-1; i>=0; i--) {
+         parent.entranceStack.push(newPhotoList.get(i));
+      }
     }
 
     // done    

@@ -22,8 +22,6 @@ int staticImageIndex = 0;
 
 PFont infoFont;
 
-int depthThreshold = 2000;
-
 PhotoArranger photoArranger;
 
 void setup() {
@@ -52,10 +50,10 @@ void setup() {
 }
 
 void draw(){
-  println(frameRate);
+  //println(frameRate);
   background(0);
   if(frameCount % 3 == 0) staticImageIndex = (int)random(0,staticImages.length);
-  image(staticImages[staticImageIndex], 0,0);
+  //image(staticImages[staticImageIndex], 0,0);
 
   kinectManager.update();
   handTracker.update();
@@ -78,14 +76,34 @@ void draw(){
   //kinectManager.draw();
   popMatrix();
   
-  handTracker.draw();
+  //handTracker.draw();
   
   //text(frameRate, 20,20);
 }
 
 void keyPressed() {  
-  if(key == '.') depthThreshold += 20;
-  if(key == ',') depthThreshold -= 20;
+  if(key == '.') kinectManager.depthThreshold += 20;
+  if(key == ',') kinectManager.depthThreshold -= 20;
+  switch(key) {
+    case '1':
+      photoArranger.setMode(1);
+      break;
+    case '2':
+      photoArranger.setMode(2);
+      break;
+    case '3':
+      photoArranger.setMode(3);
+      break;
+    case '4':
+      photoArranger.setMode(4);
+      break;
+    case '5':
+      photoArranger.setMode(5);
+      break;
+    case 'r':
+      photoArranger.entranceStack.push(photoArranger.randomPhoto());
+      break;
+  }
 }
 
 

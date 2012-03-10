@@ -43,7 +43,7 @@ class HandTracker {
       //_p.addVelocity(velocity);
       //float m = velocity.magnitude() + 0.1;
       //_p.addVelocity(new Vec2D(random(-m,m), random(-m,m)));
-      println("Adding particle velocity: ");
+      //println("Adding particle velocity: ");
     }
     
     oldHandPositions.clear();

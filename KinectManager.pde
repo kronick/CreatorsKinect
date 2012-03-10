@@ -14,6 +14,9 @@ class KinectManager {
   
   float scaleFactor = 1;
   
+  PImage depthMap;
+  int depthThreshold = 2400;
+  
   public KinectManager(CreatorsKinect applet) {
     this.applet = applet;
     kinect = new SimpleOpenNI(applet);
@@ -62,7 +65,7 @@ class KinectManager {
       kinect.update(sessionManager);
       
       // draw depthImageMap
-      PImage depthMap = kinect.depthImage();
+      depthMap = kinect.depthImage();
       int pos;
       int lineStart, lineEnd, lineLength, gapLength;
       int lastDepth = 0;
@@ -157,6 +160,54 @@ class KinectManager {
       pointDrawer.update();
       //pointDrawer.draw();
     }
+  }
+  
+  
+  public int getDepth(Vec2D p) {
+    return getDepth(p.x, p.y,false);  
+  }
+  public int getDepth(float x, float y) {
+    return getDepth(x,y, false);
+  }
+  public int getDepth(float x, float y, boolean noThreshold) {
+    if(kinect.depthMap() == null) return 0;
+    
+    int row = (int)(y/scaleFactor);
+    int col = (int)(x/scaleFactor);
+    int idx = row*depthMap.width + col;
+    if(idx >= 0 && idx < kinect.depthMap().length) {
+      int depth = kinect.depthMap()[row*depthMap.width+col];
+      if(noThreshold || (depth < depthThreshold && depth > 0))
+        return depth;
+      else return 0;
+    }
+    else return 0;
+  }
+  
+  public int getGaussianDepth(float x, float y, int size, int step) {
+    if(kinect.depthMap() == null) return 0;
+    int centerRow = (int)(y/scaleFactor);  
+    int centerCol = (int)(x/scaleFactor);
+    int sum = 0;
+    int count = 0;
+
+    for(int a=-size; a<=size; a++) {
+      for(int b=-size; b<=size; b++) {
+        int row = centerRow + a*step;
+        int col = centerCol + b*step;
+        int idx = row*depthMap.width + col;
+        if(idx >= 0 && idx < kinect.depthMap().length ) {
+          int depth = kinect.depthMap()[idx];
+          //if(depth < depthThreshold && depth > 0) {
+            sum += depth * (int)((size - abs(b))/(float)size + (size - abs(a))/(float)size);
+            count++;
+          //}
+        }
+      }
+    }
+    
+    if(count == 0) return 0;
+    else return sum/count;
   }
   
   float scaleToScreen(float x) {
