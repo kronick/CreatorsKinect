@@ -16,6 +16,7 @@ KinectManager kinectManager;
 HandTracker handTracker;
 
 GLGraphics renderer;
+static GLTexture dropshadowTexture;
 
 PImage[] staticImages;
 int staticImageIndex = 0;
@@ -26,7 +27,7 @@ PhotoArranger photoArranger;
 
 void setup() {
   size(screenWidth, screenHeight-1, GLConstants.GLGRAPHICS);
-
+ 
   kinectManager = new KinectManager(this);
   handTracker = new HandTracker(this);
  
@@ -35,22 +36,22 @@ void setup() {
   background(200,0,0);
   //size(kinect.depthWidth(), kinect.depthHeight());
   
-  // Stop tearing
-  GLGraphics pgl = (GLGraphics) g; //processing graphics object
-  GL gl = pgl.beginGL(); //begin opengl
-  gl.setSwapInterval(1); //set vertical sync on
-  pgl.endGL(); //end opengl
-  
   infoFont = createFont("Courier Bold", 12);
   textFont(infoFont);
 
   photoArranger = new PhotoArranger(this);
   
   frameRate(60);
+
+  // Stop tearing
+  GLGraphics pgl = (GLGraphics) g; //processing graphics object
+  GL gl = pgl.beginGL(); //begin opengl
+  gl.setSwapInterval(1); //set vertical sync on
+  pgl.endGL(); //end opengl
 }
 
 void draw(){
-  //println(frameRate);
+  println(frameRate);
   background(0);
   if(frameCount % 3 == 0) staticImageIndex = (int)random(0,staticImages.length);
   //image(staticImages[staticImageIndex], 0,0);
@@ -102,6 +103,13 @@ void keyPressed() {
       break;
     case 'r':
       photoArranger.entranceStack.push(photoArranger.randomPhoto());
+      break;
+    case 'f':
+      ArrayList<Photo> photosCopy = (ArrayList<Photo>)photoArranger.photos.clone();
+      Collections.shuffle(photosCopy);
+      for(int i=0; i<60; i++) {
+        photosCopy.get(i).flipSoon = true;  
+      }
       break;
   }
 }

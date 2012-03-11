@@ -22,6 +22,7 @@ class Photo extends VerletParticle2D implements Runnable {
   String nextCaption;
   GLTexture frontTexture, backTexture;
   GLModel texturedQuad;
+  GLModel dropshadowQuad;
   
   String frontCaption, backCaption;
   
@@ -68,7 +69,7 @@ class Photo extends VerletParticle2D implements Runnable {
   
   static final float VISIT_ZOOM_MIN = 1.5;
   final float VISIT_ZOOM_MAX = 2.5; //ROWS/6.;
-    
+  
   Photo(PhotoArranger _parent, String _url, float _size, float iX, float iY) {
      super(iX, iY);
      this.parent = _parent;
@@ -83,9 +84,12 @@ class Photo extends VerletParticle2D implements Runnable {
      this.backCaption = "";
      
      texturedQuad = new GLModel(parent.applet, 6, GLModel.TRIANGLE_FAN, GLModel.DYNAMIC);
+     dropshadowQuad = new GLModel(parent.applet, 6, GLModel.TRIANGLE_FAN, GLModel.DYNAMIC);
      texturedQuad.initColors();
+     dropshadowQuad.initColors();
      setVertices();
      texturedQuad.initTextures(1);  // Reserve room for 1 texture on the graphics card
+     dropshadowQuad.initTextures(1);  // Reserve room for 1 texture on the graphics card
       
      GLTextureParameters texParam = new GLTextureParameters();
      //texParam.magFilter = GLTextureParameters.LINEAR;
@@ -96,6 +100,11 @@ class Photo extends VerletParticle2D implements Runnable {
      frontLoaded = true;
      backTexture = new GLTexture(parent.applet, "default.jpg", texParam);
      texturedQuad.setTexture(0, frontTexture);
+
+     //gl.setSwapInterval(1); //set vertical sync on     //gl.
+      
+     dropshadowTexture = new GLTexture(parent.applet, "drop-shadow-01.png", texParam);
+     dropshadowQuad.setTexture(0,dropshadowTexture);
      
      setTexCoords();  
      
@@ -245,6 +254,16 @@ class Photo extends VerletParticle2D implements Runnable {
       texturedQuad.updateTexCoord(4, X2,0);
       texturedQuad.updateTexCoord(5, X1,0);
     texturedQuad.endUpdateTexCoords();  
+    
+    dropshadowQuad.beginUpdateTexCoords(0);
+      dropshadowQuad.updateTexCoord(0, 0.5,0.5);
+      dropshadowQuad.updateTexCoord(1, X1,0);
+      dropshadowQuad.updateTexCoord(2, X1,1);
+      dropshadowQuad.updateTexCoord(3, X2,1);
+      dropshadowQuad.updateTexCoord(4, X2,0);
+      dropshadowQuad.updateTexCoord(5, X1,0);
+    dropshadowQuad.endUpdateTexCoords();      
+
   }
   
   void setVertices() {
@@ -262,11 +281,29 @@ class Photo extends VerletParticle2D implements Runnable {
       texturedQuad.updateVertex(5, g*a + x,  g - b*g*PERSPECTIVE_FACTOR + y); 
     texturedQuad.endUpdateVertices();
     
+    float k = 1.2;
+    dropshadowQuad.beginUpdateVertices();
+      dropshadowQuad.updateVertex(0, x,y);  // Center point
+      dropshadowQuad.updateVertex(1, k*g*a + x,  k*g - k*b*g*PERSPECTIVE_FACTOR + y);
+      dropshadowQuad.updateVertex(2, k*g*a + x, -k*g + k*b*g*PERSPECTIVE_FACTOR + y);
+      dropshadowQuad.updateVertex(3, -k*g*a + x, -k*g - k*b*g*PERSPECTIVE_FACTOR + y);
+      dropshadowQuad.updateVertex(4, -k*g*a + x,  k*g + k*b*g*PERSPECTIVE_FACTOR + y);
+      dropshadowQuad.updateVertex(5, k*g*a + x,  k*g - k*b*g*PERSPECTIVE_FACTOR + y); 
+    dropshadowQuad.endUpdateVertices();    
+    
+
+    
     texturedQuad.beginUpdateColors();
     for (int i = 0; i < 6; i++) {
       texturedQuad.updateColor(i,255,0,255, opacity * 255);
     }
-    texturedQuad.endUpdateColors();     
+    texturedQuad.endUpdateColors();    
+    
+    dropshadowQuad.beginUpdateColors();
+    for (int i = 0; i < 6; i++) {
+      dropshadowQuad.updateColor(i,255,0,255, opacity * 128);
+    }
+    dropshadowQuad.endUpdateColors();
   }
   
   void draw() {
@@ -276,6 +313,7 @@ class Photo extends VerletParticle2D implements Runnable {
     //stroke(255);
     //tint(255,255,255,100);
 
+    dropshadowQuad.render();
     texturedQuad.render();
   }
   

@@ -2,8 +2,8 @@ import org.json.*;
 import java.util.*;
 
 class PhotoLoader implements Runnable {
-  //String[] feeds = {"https://api.instagram.com/v1/tags/food/media/recent?access_token=19453848.e3ef9b3.028791cb4f1743d0a59da2eba059786a"};
-  String[] feeds = {"https://api.instagram.com/v1/users/1885828/media/recent?access_token=19453848.e3ef9b3.028791cb4f1743d0a59da2eba059786a"};
+  String[] feeds = {"https://api.instagram.com/v1/tags/food/media/recent?access_token=19453848.e3ef9b3.028791cb4f1743d0a59da2eba059786a"};
+  //String[] feeds = {"https://api.instagram.com/v1/users/1885828/media/recent?access_token=19453848.e3ef9b3.028791cb4f1743d0a59da2eba059786a"};
   int[] feedCount = {0};
   float[] feedBalance = {1};
 
@@ -100,7 +100,14 @@ class PhotoLoader implements Runnable {
           max_id = jsonObj.getJSONObject("pagination").getString("next_max_id");
           //max_id = jsonObj.getJSONObject("pagination").getString("next_max_tag_id");
         }
-        catch (JSONException e) { println("Last Page"); lastPage = true; }
+        catch (JSONException e) {
+          try {
+            max_id = jsonObj.getJSONObject("pagination").getString("next_max_tag_id");
+          }
+          catch (JSONException f) {
+            println("Last Page"); lastPage = true;
+          }
+        }
         
         if(photosArray.length() == 0) { println("No photos.");  break; }
         
@@ -156,8 +163,15 @@ class PhotoLoader implements Runnable {
     
     // Add the new photos to the entrance stack in reverse order
     if(!initialLoad) {
-      for(int i=newPhotoList.size()-1; i>=0; i--) {
-         parent.entranceStack.push(newPhotoList.get(i));
+      if(newPhotoList.size() < 2) {
+        for(int i=newPhotoList.size()-1; i>=0; i--) {
+           parent.entranceStack.push(newPhotoList.get(i));
+        }
+      }
+      else if(newPhotoList.size() < 100) {
+        for(int i=0; i<newPhotoList.size(); i++) {
+          newPhotoList.get(i).flipSoon = true;
+        }
       }
     }
 

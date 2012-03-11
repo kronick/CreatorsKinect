@@ -167,7 +167,7 @@ class PhotoArranger {
         if(_p == enteringPhoto) {
           entranceStep++;
           
-          _p.angleYTarget = 0;
+          //_p.angleYTarget = 0;
           
           if(entranceSpring == null) {
             entranceSpring = new VerletSpring2D(entranceAnchor, enteringPhoto, 0, 0);
@@ -179,14 +179,17 @@ class PhotoArranger {
             //float step, float duration, float min, float max
             _p.scaleTarget = tweenEaseInOutBack(entranceStep, transitionLength, 1, entrancePhotoSize);  
             entranceSpring.setStrength(entranceSpringStrength*tweenEaseInOutBack(entranceStep, transitionLength, 0, 1));
+            _p.angleYTarget = tweenEaseInOutBack(entranceStep, transitionLength, 0, 360);
           }
           else if(entranceStep > entranceLength - transitionLength) {
             _p.scaleTarget = tweenEaseInOutBack(entranceStep-(entranceLength - transitionLength), transitionLength, entrancePhotoSize, 1);  
             entranceSpring.setStrength(entranceSpringStrength*tweenEaseInOutBack(entranceStep-(entranceLength - transitionLength), transitionLength, 1, 0));
+            _p.angleYTarget = tweenEaseInOutBack(entranceStep-(entranceLength - transitionLength), transitionLength, 360, 0);  
           }
           else {
             _p.scaleTarget = 5;
             if(entranceStep == (int)(entranceLength/2)) _p.triggerFlip();
+            _p.angleYTarget = 360;
           }
           
           if(entranceStep >= entranceLength) {
@@ -245,20 +248,53 @@ class PhotoArranger {
         _p.setVertices();        
       }
       else if(mode == FLIP_MODE) {
-          for(int j=0; j<handAttractors.size(); j++) {
-            physics.removeBehavior(handAttractors.get(j));
+        for(int j=0; j<handAttractors.size(); j++) {
+          physics.removeBehavior(handAttractors.get(j));
+        }
+        handAttractors.clear();        
+        
+        float displacement = applet.kinectManager.getDepth(_p.x, _p.y);
+        if(displacement == 0 || displacement > applet.kinectManager.depthThreshold) displacement = 1;
+        else displacement = map(displacement, HAND_MIN_DISTANCE, applet.kinectManager.depthThreshold, 3,1);
+        
+        _p.scaleTarget = 1;
+        _p.opacity = 1;
+        _p.angleYTarget = 60*(displacement - 1);        
+        
+        if(_p == enteringPhoto) {
+          entranceStep++;
+          
+          if(entranceSpring == null) {
+            entranceSpring = new VerletSpring2D(entranceAnchor, enteringPhoto, 0, 0);
+            physics.addSpring(entranceSpring);
           }
-          handAttractors.clear();        
           
-          float displacement = applet.kinectManager.getDepth(_p.x, _p.y);
-          if(displacement == 0 || displacement > applet.kinectManager.depthThreshold) displacement = 1;
-          else displacement = map(displacement, HAND_MIN_DISTANCE, applet.kinectManager.depthThreshold, 3,1);
+          float transitionLength = (entranceLength - entranceLength*entrancePause) / 2.;
+          if(entranceStep < transitionLength) {
+            //float step, float duration, float min, float max
+            _p.scaleTarget = tweenEaseInOutBack(entranceStep, transitionLength, 1, entrancePhotoSize);  
+            entranceSpring.setStrength(entranceSpringStrength*tweenEaseInOutBack(entranceStep, transitionLength, 0, 1));
+            _p.angleYTarget = tweenEaseInOutBack(entranceStep, transitionLength, 0, 360);
+          }
+          else if(entranceStep > entranceLength - transitionLength) {
+            _p.scaleTarget = tweenEaseInOutBack(entranceStep-(entranceLength - transitionLength), transitionLength, entrancePhotoSize, 1);  
+            entranceSpring.setStrength(entranceSpringStrength*tweenEaseInOutBack(entranceStep-(entranceLength - transitionLength), transitionLength, 1, 0));
+            _p.angleYTarget = tweenEaseInOutBack(entranceStep-(entranceLength - transitionLength), transitionLength, 360, 0);  
+          }
+          else {
+            _p.scaleTarget = 5;
+            if(entranceStep == (int)(entranceLength/2)) _p.triggerFlip();
+            _p.angleYTarget = 360;
+          }
           
-          _p.scaleTarget = 1;
-          _p.opacity = 1;
-          _p.angleYTarget = 60*(displacement - 1);
-       
-          _p.setVertices();         
+          if(entranceStep >= entranceLength) {
+            entranceStep = 0;
+            enteringPhoto = null;
+          }
+          
+        }          
+     
+        _p.setVertices();         
       }
     }
     
