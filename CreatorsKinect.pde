@@ -54,7 +54,7 @@ void draw(){
   println(frameRate);
   background(0);
   if(frameCount % 3 == 0) staticImageIndex = (int)random(0,staticImages.length);
-  //image(staticImages[staticImageIndex], 0,0);
+  image(staticImages[staticImageIndex], 0,0);
 
   kinectManager.update();
   handTracker.update();
@@ -64,21 +64,21 @@ void draw(){
   handPositions.add(new Vec3D(kinectManager.handPosition.x*2, kinectManager.handPosition.y*2, 0));
   photoArranger.updateHands(handPositions);
   */
+ 
   
-  renderer = (GLGraphics)g;
+  //pushMatrix();
+  //scale(2);
+  //stroke(255,0,128);
+  kinectManager.draw();
+  //popMatrix();
+  
+  handTracker.draw();
+  
+   renderer = (GLGraphics)g;
   renderer.beginGL();
     photoArranger.update();
     photoArranger.draw();
-  renderer.endGL();
-  
-  pushMatrix();
-  //scale(2);
-  //stroke(255,0,128);
-  //kinectManager.draw();
-  popMatrix();
-  
-  //handTracker.draw();
-  
+  renderer.endGL(); 
   //text(frameRate, 20,20);
 }
 

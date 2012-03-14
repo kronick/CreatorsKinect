@@ -7,7 +7,7 @@ class Photo extends VerletParticle2D implements Runnable {
   boolean hasMoved = false;
   float size;
   float scale = 1;
-  float scaleK = 0.01;
+  float scaleK = 0.02;
   
   float opacity = 1;
   
@@ -43,7 +43,7 @@ class Photo extends VerletParticle2D implements Runnable {
   int flipStep = 0;
   float angleY = 0; float angleYTarget = 0;
   float angleX = 0; float angleXTarget = 0;
-  float angleK = 0.03;
+  float angleK = 0.05;
   float flipY = 0;
   float flipX = 0;
   boolean flipping = false;
@@ -63,7 +63,7 @@ class Photo extends VerletParticle2D implements Runnable {
   static final float PERSPECTIVE_FACTOR = 0.2;
   
   static final float RANDOM_ZOOM_CHANCE = 0.0001;
-  static final float RANDOM_FLIP_CHANCE = -1;
+  static final float RANDOM_FLIP_CHANCE = 0.0001;
   static final float RANDOM_RELOAD_CHANCE = 0.0001;
   static final float RANDOM_VISIT_CHANCE = 0.44;
   

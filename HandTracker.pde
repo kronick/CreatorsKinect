@@ -36,7 +36,7 @@ class HandTracker {
       }
       
       AgingParticle _p = new AgingParticle(handPositions.get(i).x + random(-5,5), handPositions.get(i).y + random(-5,5), (int)random(30,100));
-      if(random(0,10) < 1) {
+      if(random(0,40) < 1) {
         particles.add(_p);  
         physics.addParticle(_p);
       }

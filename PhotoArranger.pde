@@ -50,10 +50,10 @@ class PhotoArranger {
   float closestZ;
   float farthestZ;
   
-  static final float HAND_MIN_DISTANCE = 1800;
-  static final float HAND_MAX_DISTANCE = 2400;
-  static final float HAND_MIN_FORCE    = 0.01;  // 0.2
-  static final float HAND_MAX_FORCE    = 0.05;  // 0.9
+  static final float HAND_MIN_DISTANCE = 2400;
+  static final float HAND_MAX_DISTANCE = 3600;
+  static final float HAND_MIN_FORCE    = 0.005;  // 0.2
+  static final float HAND_MAX_FORCE    = 0.03;  // 0.9
   
   public PhotoArranger(CreatorsKinect applet) {
     this.applet = applet;
@@ -161,7 +161,7 @@ class PhotoArranger {
         _p.scaleTarget = displacementScale;
         _p.setVertices();
         
-        _p.opacity = map(_p.scale, closestZ, farthestZ, 1, 1/closestZ);
+        _p.opacity = map(_p.scale, closestZ + 0.01, farthestZ, 1, 1/(closestZ + 0.01));
         //if(!activePhotos.contains(_p)) activePhotos.add(_p);
         
         if(_p == enteringPhoto) {
@@ -188,7 +188,7 @@ class PhotoArranger {
           }
           else {
             _p.scaleTarget = 5;
-            if(entranceStep == (int)(entranceLength/2)) _p.triggerFlip();
+            if(entranceStep == (int)(entranceLength/4)) _p.triggerFlip();
             _p.angleYTarget = 360;
           }
           
@@ -232,7 +232,7 @@ class PhotoArranger {
           }
           else {
             _p.scaleTarget = 5;
-            if(entranceStep == (int)(entranceLength/2)) _p.triggerFlip();
+            if(entranceStep == (int)(entranceLength/4)) _p.triggerFlip();
           }
           
           if(entranceStep >= entranceLength) {
@@ -243,7 +243,7 @@ class PhotoArranger {
         
         //_p.scaleTarget += cos(frameCount/10. + _p.id*13) * _p.scale * 0.25;
         
-        _p.opacity = map(_p.scale, closestZ, farthestZ, 1, 1/closestZ);
+        _p.opacity = map(_p.scale, closestZ + 0.01, farthestZ, 1, 1/(closestZ + 0.01));
         
         _p.setVertices();        
       }
@@ -255,10 +255,11 @@ class PhotoArranger {
         
         float displacement = applet.kinectManager.getDepth(_p.x, _p.y);
         if(displacement == 0 || displacement > applet.kinectManager.depthThreshold) displacement = 1;
-        else displacement = map(displacement, HAND_MIN_DISTANCE, applet.kinectManager.depthThreshold, 3,1);
+        else displacement = map(displacement, HAND_MIN_DISTANCE, applet.kinectManager.depthThreshold, 6,1);
         
         _p.scaleTarget = 1;
-        _p.opacity = 1;
+        //_p.opacity = 1;
+        _p.opacity = map(_p.scale, closestZ + 0.01, farthestZ, 1, 1/(closestZ + 0.01));
         _p.angleYTarget = 60*(displacement - 1);        
         
         if(_p == enteringPhoto) {
@@ -283,7 +284,7 @@ class PhotoArranger {
           }
           else {
             _p.scaleTarget = 5;
-            if(entranceStep == (int)(entranceLength/2)) _p.triggerFlip();
+            if(entranceStep == (int)(entranceLength/4)) _p.triggerFlip();
             _p.angleYTarget = 360;
           }
           
@@ -341,7 +342,7 @@ class PhotoArranger {
           float noiseAngle = noise.noise(_h.x * 0.1, _h.y * 0.1, millis()/100.) * 15;
           Vec2D n = new Vec2D(10*cos(noiseAngle), 10*sin(noiseAngle));
           
-          AttractionBehavior attractor = new AttractionBehavior(new Vec2D(n.x + _h.x, n.y + _h.y), 300, -force);
+          AttractionBehavior attractor = new AttractionBehavior(new Vec2D(n.x + _h.x, n.y + _h.y), 200, -force);
           physics.addBehavior(attractor);
           handAttractors.add(attractor);
           
@@ -420,6 +421,7 @@ class PhotoArranger {
     
     farthestZ = photos.get(0).scale;
     closestZ = photos.get(photos.size()-1).scale;
+    //if(closestZ == 0) { closestZ = 1; farthestZ = 1; }
   }
   
   

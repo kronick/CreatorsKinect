@@ -15,7 +15,7 @@ class KinectManager {
   float scaleFactor = 1;
   
   PImage depthMap;
-  int depthThreshold = 2400;
+  int depthThreshold = 3600;
   
   public KinectManager(CreatorsKinect applet) {
     this.applet = applet;
@@ -119,7 +119,7 @@ class KinectManager {
               activeHands.add(new Vec3D(endpointA.x, endpointA.y, 1600));
               activeHands.add(new Vec3D(endpointB.x, endpointB.y, 1600));
               colorMode(HSB);
-              s.lineColor = color(100+(avgDepth/(float)lineLength) * 155,255, 255);
+              s.lineColor = color(0+(avgDepth/(float)lineLength) * 255,255, 255);
               scanLines.add(s);
             }
             lineStart = -1;
@@ -157,7 +157,7 @@ class KinectManager {
     }    
     
     if(!simulate) {
-      pointDrawer.update();
+      //pointDrawer.update();
       //pointDrawer.draw();
     }
   }

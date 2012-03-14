@@ -2,7 +2,7 @@ import org.json.*;
 import java.util.*;
 
 class PhotoLoader implements Runnable {
-  String[] feeds = {"https://api.instagram.com/v1/tags/food/media/recent?access_token=19453848.e3ef9b3.028791cb4f1743d0a59da2eba059786a"};
+  String[] feeds = {"https://api.instagram.com/v1/tags/creators/media/recent?access_token=19453848.e3ef9b3.028791cb4f1743d0a59da2eba059786a"};
   //String[] feeds = {"https://api.instagram.com/v1/users/1885828/media/recent?access_token=19453848.e3ef9b3.028791cb4f1743d0a59da2eba059786a"};
   int[] feedCount = {0};
   float[] feedBalance = {1};
