@@ -11,7 +11,7 @@ class KinectManager {
   
   ArrayList<ScanLine> scanLines;
   PVector handPosition, oldHandPosition;
-  
+
   float scaleFactor = 1;
   
   PImage depthMap;
@@ -170,7 +170,7 @@ class KinectManager {
     return getDepth(x,y, false);
   }
   public int getDepth(float x, float y, boolean noThreshold) {
-    if(kinect.depthMap() == null) return 0;
+    if(simulate || kinect.depthMap() == null) return 0;
     
     int row = (int)(y/scaleFactor);
     int col = (int)(x/scaleFactor);

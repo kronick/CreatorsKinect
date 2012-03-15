@@ -50,6 +50,13 @@ class Photo extends VerletParticle2D implements Runnable {
   boolean flipSoon = false;  // If true, will flip at next possible chance (after other side is loaded)
   int flipDirection;
   static final float FLIP_SPEED = 2;
+  
+  boolean bouncing = false;
+  boolean bounceSoon = false;
+  int bounceStep = 0;
+  float bounceScale = 0;
+  static final float BOUNCE_MAX_SIZE = 1.5;
+  static final int BOUNCE_TIME = 60;
  
   boolean zooming = false;
   boolean zoomOnLoad = false;
@@ -158,6 +165,9 @@ class Photo extends VerletParticle2D implements Runnable {
 
     if(!flipping && !zooming && (random(0,1) < RANDOM_ZOOM_CHANCE || zoomSoon))
       triggerZoom();
+
+    if(!flipping && !flipSoon && bounceSoon)
+      triggerBounce();
     
     if(!flipping && random(0,1) < RANDOM_RELOAD_CHANCE) {
       try {
@@ -179,6 +189,22 @@ class Photo extends VerletParticle2D implements Runnable {
     if(flipStep >= 180 || flipStep <= 0) {
       // Stop flipping if at 180 or 0 degrees
       flipping = false;
+    }
+    
+    if(bouncing) {
+      bounceStep++;
+      if(bounceStep < BOUNCE_TIME / 2) {
+        bounceScale = tweenEaseInOutBack(bounceStep, BOUNCE_TIME/2, 0, BOUNCE_MAX_SIZE);
+      }
+      else {
+        bounceScale = tweenEaseInOutBack(bounceStep-BOUNCE_TIME/2, BOUNCE_TIME/2, BOUNCE_MAX_SIZE, 0);
+      }
+    
+      if(bounceStep > BOUNCE_TIME) {
+        bounceStep = 0;
+        bouncing = false;
+        bounceScale = 0;
+      }  
     }
     
     // Figure out which side is showing
@@ -220,7 +246,7 @@ class Photo extends VerletParticle2D implements Runnable {
       zoomStep = 180;
     }
     
-    scale += (scaleTarget - scale) * scaleK;
+    scale += ((scaleTarget + bounceScale) - scale) * scaleK;
     
     /*
     velocity.x *= velocityDamping;
@@ -336,6 +362,15 @@ class Photo extends VerletParticle2D implements Runnable {
       
       if(random(0,1) < RANDOM_VISIT_CHANCE)
         visitMe();
+    }
+  }
+  
+  void triggerBounce() { triggerBounce(false); }
+  void triggerBounce(boolean force) {
+    if(force || (backLoaded && frontLoaded)) {
+      bouncing = true;
+      //bounceStep = 0;
+      bounceSoon = false;
     }
   }
   

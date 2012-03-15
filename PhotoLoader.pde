@@ -163,7 +163,7 @@ class PhotoLoader implements Runnable {
     
     // Add the new photos to the entrance stack in reverse order
     if(!initialLoad) {
-      if(newPhotoList.size() < 2) {
+      if(newPhotoList.size() < 10) {
         for(int i=newPhotoList.size()-1; i>=0; i--) {
            parent.entranceStack.push(newPhotoList.get(i));
         }
@@ -171,6 +171,7 @@ class PhotoLoader implements Runnable {
       else if(newPhotoList.size() < 100) {
         for(int i=0; i<newPhotoList.size(); i++) {
           newPhotoList.get(i).flipSoon = true;
+          newPhotoList.get(i).bounceSoon = true;
         }
       }
     }

@@ -22,6 +22,12 @@ PImage[] staticImages;
 int staticImageIndex = 0;
 
 PFont infoFont;
+GLTexture creatorsTag;
+int hashtagStep = 0;
+static final int HASHTAG_FADE_TIME = 960;
+static final int HASHTAG_SIZE = 10;
+int hashtagPosition = 0;
+boolean showHashtag = true;
 
 PhotoArranger photoArranger;
 
@@ -38,6 +44,8 @@ void setup() {
   
   infoFont = createFont("Courier Bold", 12);
   textFont(infoFont);
+  
+  creatorsTag = new GLTexture(this, "creators-tag.png");
 
   photoArranger = new PhotoArranger(this);
   
@@ -56,6 +64,10 @@ void draw(){
   if(frameCount % 3 == 0) staticImageIndex = (int)random(0,staticImages.length);
   image(staticImages[staticImageIndex], 0,0);
 
+  if(second() < 30)          photoArranger.setMode(2);
+  else if(minute() % 2 == 0) photoArranger.setMode(3);
+  else                       photoArranger.setMode(4);
+  
   kinectManager.update();
   handTracker.update();
   
@@ -79,7 +91,11 @@ void draw(){
     photoArranger.update();
     photoArranger.draw();
   renderer.endGL(); 
+  
+  if(showHashtag) drawHashtag();
+  
   //text(frameRate, 20,20);
+  
 }
 
 void keyPressed() {  
@@ -109,6 +125,7 @@ void keyPressed() {
       Collections.shuffle(photosCopy);
       for(int i=0; i<60; i++) {
         photosCopy.get(i).flipSoon = true;  
+        photosCopy.get(i).bounceSoon = true;
       }
       break;
   }
@@ -127,4 +144,52 @@ void generateStatic() {
     }
     staticImages[i].updatePixels();
   }  
+}
+
+void drawHashtag() {
+  hashtagStep++;
+  if(hashtagStep > HASHTAG_FADE_TIME) {
+    hashtagStep = 0;
+    hashtagPosition = (int)random(0,4); 
+  }
+  
+  if(hashtagStep < HASHTAG_FADE_TIME) {
+    //float alpha = (sin(frameCount/50.)+2)*60;
+    float alpha = 0;
+    if(hashtagStep < 360)
+      alpha = tweenEaseInOut(hashtagStep, 360, 0, 240);
+    else if(hashtagStep < HASHTAG_FADE_TIME-360)  
+      alpha = 240;
+    else
+      alpha = tweenEaseInOut(HASHTAG_FADE_TIME-hashtagStep, 360, 0, 240);
+    
+    float hashtagOffset = HASHTAG_SIZE/200. * 150;
+    
+    pushMatrix();
+    switch(hashtagPosition) {
+      case 0:
+        translate(hashtagOffset, height);
+        rotate(radians(-90));
+        translate(-30,-30);
+        break;
+      case 1:
+        translate(width-creatorsTag.height, height);
+        rotate(radians(-90));      
+        break;
+      case 2:
+        translate(0,hashtagOffset);
+        translate(-30,-30);
+        break;
+      case 3:
+      default:
+        translate(width - creatorsTag.width, height - creatorsTag.height);
+        break;
+    }
+    colorMode(RGB);
+    tint(alpha,alpha,alpha, alpha);
+    //image(creatorsTag,0,0);
+    creatorsTag.render();
+    tint(1,1,1,1);
+    popMatrix();
+  }
 }
