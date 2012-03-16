@@ -2,11 +2,8 @@ import org.json.*;
 import java.util.*;
 
 class PhotoLoader implements Runnable {
-  String[] feeds = {"https://api.instagram.com/v1/tags/creators/media/recent?access_token=19453848.e3ef9b3.028791cb4f1743d0a59da2eba059786a"};
-  //String[] feeds = {"https://api.instagram.com/v1/users/1885828/media/recent?access_token=19453848.e3ef9b3.028791cb4f1743d0a59da2eba059786a"};
-  int[] feedCount = {0};
-  float[] feedBalance = {1};
-
+  String feed = "http://192.168.1.4:8085/photos";
+  
   Stack<String> photoStack;
   Stack<Boolean> availability;
   Stack<String> captions;
@@ -16,7 +13,7 @@ class PhotoLoader implements Runnable {
   boolean loading;
   
   float lastUpdateTime = 0;
-  static final int UPDATE_FREQUENCY = 4000;  // milliseconds
+  static final int UPDATE_FREQUENCY = 1000;  // milliseconds
   
   boolean initialLoad = true;
   
@@ -59,117 +56,81 @@ class PhotoLoader implements Runnable {
   void run() {
     println("Reloading feed...");
 
-    float totalBalance = 0;
-    for(int i=0; i<feedBalance.length; i++) totalBalance += feedBalance[i];
-    
-    for(int i=0; i<feeds.length; i++) {
-      float balanceFraction = feedBalance[i] / totalBalance;
-      int balanceLimit = (int)(photoStack.size() < MIN_STACK_SIZE ? balanceFraction * MIN_STACK_SIZE :
-                               (photoStack.size() * balanceFraction - feedCount[i]));
-      if(feeds.length == 1) balanceLimit = MAX_INT;
-      int newPhotos = loadPhotos(feeds[i], 20, MIN_STACK_SIZE, balanceLimit);
-      feedCount[i] += newPhotos;
-      //if(newPhotos > 0)
-      println(newPhotos + " added from feed " + i);
-    }
+    int newPhotos = loadPhotos(feed, 400);
+    println(newPhotos + " added from feed");
     
     lastUpdateTime = millis();
     loading = false;
     
     initialLoad = false;
   } 
-  
-  int loadPhotos(String feed, int atATime, int keepFull) {
-    return loadPhotos(feed, atATime, keepFull, Integer.MAX_VALUE);
-  }
-  int loadPhotos(String feed, int atATime, int keepFull, int limit) {
+ 
+  int loadPhotos(String feed, int limit) {
     int newPhotos = 0;    
     int retrieved = 0;
     String max_id = "";
     ArrayList<Photo> newPhotoList = new ArrayList<Photo>();
     
-    while((photoStack.size() < keepFull || retrieved < atATime) && newPhotos < limit) {
-      print(".");
-      boolean lastPage = false;
-      try {
-        String lines[] = loadStrings(feed + (max_id.equals("") ? "" : ("&max_id=" + max_id)));
-        String json = join(lines, "\n");    
-        JSONObject jsonObj = new JSONObject(json);
-        JSONArray photosArray = jsonObj.getJSONArray("data");
-        try {
-          max_id = jsonObj.getJSONObject("pagination").getString("next_max_id");
-          //max_id = jsonObj.getJSONObject("pagination").getString("next_max_tag_id");
-        }
-        catch (JSONException e) {
-          try {
-            max_id = jsonObj.getJSONObject("pagination").getString("next_max_tag_id");
-          }
-          catch (JSONException f) {
-            println("Last Page"); lastPage = true;
-          }
-        }
+    try {
+      String urls[] = loadStrings(feed);   
+      
+      if(urls.length == 0) { println("No photos.");  return 0; }
+      
+      for(int i=0; i<urls.length && i < limit; i++) {
+        String url = urls[i];
+        if(url.equals("")) break;
         
-        if(photosArray.length() == 0) { println("No photos.");  break; }
+        boolean forceNew = url.charAt(0) == '*';
+        if(forceNew) url = url.substring(1);
+        boolean cached = photoStack.contains(url);
         
-        for(int i=0; i<photosArray.length(); i++) {
-          if(newPhotos >= limit) break;  // Stop if enough have been loaded
-          
-          JSONObject obj = photosArray.getJSONObject(i);
-          
-          String url = obj.getJSONObject("images").getJSONObject("low_resolution").getString("url");
-          
-          String caption = "";
-          if(obj.has("caption")) {
-            try {
-              caption = obj.getJSONObject("caption").getString("text");
-            }
-            catch (JSONException e) { }
-          }
-          
-          //println(caption);
-          
-          retrieved++;
-          
-          if(!photoStack.contains(url)) {
-            // Add this to the stack
+        String caption = "";
+        
+        retrieved++;
+        
+        
+        if(forceNew || !cached) {
+          // Add this to the stack if it's not already there
+          if(!cached) {
             photoStack.push(url);
             availability.push(true);
             captions.push(caption);
-            Photo p;
-            // Grab an empty (if this is the initial load) or random photo space
-            if(initialLoad)
-              p = parent.emptyPhoto();
-            else
-              p = parent.randomPhoto(10, false);
-              
-            if(p != null) {  // Ok, this is a good new photo
-              // Tell the selected grid space to change its image
-              p.changeImage(url, initialLoad, !initialLoad);
-              newPhotoList.add(p);
-              //print(".");
-            }
-            
-            newPhotos++;
-            
           }
+          
+          Photo p;
+          // Grab an empty (if this is the initial load) or random photo space
+          if(initialLoad)
+            p = parent.emptyPhoto();
+          else
+            p = parent.randomPhoto(10, false);
+            
+          if(p != null) {  // Ok, this is a good new photo
+            // Tell the selected grid space to change its image
+            p.changeImage(url, initialLoad, !initialLoad);
+            newPhotoList.add(p);
+            //print(".");
+          }
+          
+          newPhotos++;
+          
         }
       }
-      catch (Exception e) {
-        println("Problem with Instagram API: " + e);
-      }
-      
-      if(lastPage) break;
+    }
+    catch (Exception e) {
+      println("Problem with API: " + e);
     }
     
     // Add the new photos to the entrance stack in reverse order
     if(!initialLoad) {
       if(newPhotoList.size() < 10) {
         for(int i=newPhotoList.size()-1; i>=0; i--) {
-           parent.entranceStack.push(newPhotoList.get(i));
+          // Add to the new photos stack to be featured
+          parent.entranceStack.push(newPhotoList.get(i));
         }
       }
-      else if(newPhotoList.size() < 100) {
+      else {
         for(int i=0; i<newPhotoList.size(); i++) {
+          // Flip and bounce as soon as each new photo is loaded
           newPhotoList.get(i).flipSoon = true;
           newPhotoList.get(i).bounceSoon = true;
         }

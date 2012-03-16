@@ -59,7 +59,7 @@ void setup() {
 }
 
 void draw(){
-  println(frameRate);
+  //println(frameRate);
   background(0);
   if(frameCount % 3 == 0) staticImageIndex = (int)random(0,staticImages.length);
   image(staticImages[staticImageIndex], 0,0);

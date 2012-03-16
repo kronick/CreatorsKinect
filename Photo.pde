@@ -431,7 +431,13 @@ class Photo extends VerletParticle2D implements Runnable {
       // Currently on front, transition to back
       backLoaded = false;
       backLoading = true;
-      backImage = loadImage(nextURL);
+      try {
+        backImage = loadImage(nextURL);
+      }
+      catch (Exception e) { 
+        loadImage("default.jpg"); 
+        println("Couldn't load photo: " + nextURL);
+      }
       backWaiting = true;  // Ready to be transfered to GLTexture on main thread
       backLoaded = true; 
       backLoading = false;  
@@ -451,7 +457,13 @@ class Photo extends VerletParticle2D implements Runnable {
       // Currently on back, transition to front
       frontLoaded = false;
       frontLoading = true;
-      frontImage = loadImage(nextURL);
+      try {
+        frontImage = loadImage(nextURL);
+      }
+      catch (Exception e) {
+        loadImage("default.jpg");
+        println("Couldn't load photo: " + nextURL);
+      }
       frontWaiting = true; // Ready to be transfered to GLTexture on main thread
       frontLoaded = true; 
       frontLoading = false; 
