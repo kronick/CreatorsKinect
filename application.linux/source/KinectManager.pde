@@ -17,7 +17,7 @@ public class KinectManager {
   float scaleFactor = 1;
   
   PImage depthMap;
-  int depthThreshold = int(settings.get("kinect-far"));
+  int depthThreshold = 3600;
   
   public KinectManager(CreatorsKinect applet) {
     this.applet = applet;

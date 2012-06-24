@@ -31,47 +31,14 @@ boolean showHashtag = true;
 
 PhotoArranger photoArranger;
 
-boolean simulateFreeze = false;
 boolean shuttingDown = false;
-boolean restarting = false;
 int shutdownTimer = 0;
 static final int SHUTDOWN_TIME = 60;
 
 String watchdogFile = "/tmp/watching-the-clock";
-String settingsFile = "settings.conf";
-HashMap<String, String> settings;
 
 void setup() {
   size(screenWidth, screenHeight-1, GLConstants.GLGRAPHICS);
- 
-  // Populate default settings
-  settings = new HashMap<String, String>();
-  settings.put("feed-url", "http://localhost:8080/tag/creators");
-  settings.put("feed-update-period", "1000");
-  settings.put("default-logo", "default.png");
-  settings.put("hashtag-image", "creators-tag.png");
-  settings.put("kinect-near", "2400");
-  settings.put("kinect-far", "3600"); 
-  settings.put("kinect-min-force", "0.005");
-  settings.put("kinect-max-force", "0.03");
-  settings.put("physics-drag", "0.2");
-  settings.put("watchdog-file", "/tmp/watching-the-clock");
-  
-  // Load settings from file
-  String[] settingsLines = loadStrings(settingsFile);
-  if(settingsLines != null && settingsLines.length > 0) {
-    for(int i=0; i<settingsLines.length; i++) {
-      String key, value;
-      String[] split = split(": ", settingsLines[i]);
-      if(split.length > 1) {
-        key = split[0].trim();
-        value = split[1].trim();
-        settings.put(key, value);
-      }  
-    }
-  }
-  
-  watchdogFile = settings.get("watchdog-file");
  
   kinectManager = new KinectManager(this);
   handTracker = new HandTracker(this);
@@ -84,11 +51,11 @@ void setup() {
   infoFont = createFont("Courier Bold", 12);
   textFont(infoFont);
   
-  creatorsTag = new GLTexture(this, settings.get("hashtag-image"));
+  creatorsTag = new GLTexture(this, "creators-tag.png");
 
   photoArranger = new PhotoArranger(this);
   
-  frameRate(45);
+  frameRate(30);
 
   // Stop tearing
   GLGraphics pgl = (GLGraphics) g; //processing graphics object
@@ -103,13 +70,10 @@ void draw(){
   background(0);
   if(frameCount % 3 == 0) staticImageIndex = (int)random(0,staticImages.length);
   image(staticImages[staticImageIndex], 0,0);
-  
-  /*
+
   if(second() < 30)          photoArranger.setMode(2);
   else if(minute() % 2 == 0) photoArranger.setMode(3);
   else                       photoArranger.setMode(4);
-  */
-  photoArranger.setMode(2);
   
   kinectManager.update();
   handTracker.update();
@@ -138,14 +102,11 @@ void draw(){
   if(showHashtag) drawHashtag();
   
   
-  if(shuttingDown || restarting) {
+  if(shuttingDown) {
     fill(0,0,0, shutdownTimer / (float)SHUTDOWN_TIME * 255);
     rect(0,0,width,height);
     shutdownTimer++;
-    if(shutdownTimer > SHUTDOWN_TIME) {
-      if(shuttingDown) safeShutdown();  
-      else if(restarting) safeRestart();
-    }
+    if(shutdownTimer > SHUTDOWN_TIME) safeShutdown();  
   }
   //text(frameRate, 20,20);
   
@@ -159,6 +120,7 @@ void keyPressed() {
   
   if(key == '.') kinectManager.depthThreshold += 20;
   if(key == ',') kinectManager.depthThreshold -= 20;
+  if(key == 'q') shuttingDown = true;
   
   switch(key) {
     case '1':
@@ -176,6 +138,9 @@ void keyPressed() {
     case '5':
       photoArranger.setMode(5);
       break;
+    case 'r':
+      photoArranger.entranceStack.push(photoArranger.randomPhoto());
+      break;
     case 'f':
       ArrayList<Photo> photosCopy = (ArrayList<Photo>)photoArranger.photos.clone();
       Collections.shuffle(photosCopy);
@@ -184,15 +149,6 @@ void keyPressed() {
         photosCopy.get(i).bounceSoon = true;
       }
       break;
-    case 's':
-      simulateFreeze = !simulateFreeze;
-      break;
-    case 'q':
-      shuttingDown = true;
-      break;
-    case 'r':
-      restarting = true;
-      break;    
   }
 }
 
@@ -259,17 +215,12 @@ void drawHashtag() {
 }
 
 void keepAlive() {
-  if(frameCount % 10 == 0 && !simulateFreeze) {
+  if(frameCount % 10 == 0) {
     String[] out = {"Alive", str((int)(System.currentTimeMillis() / 100L))}; 
     saveStrings(watchdogFile, out);
   }
 }
 
-void safeRestart() {
-  String[] out = {"Restart", str((int)(System.currentTimeMillis() / 100L))};
-  saveStrings(watchdogFile, out);
-  exit();  
-}
 void safeShutdown() {
   String[] out = {"Shutdown", str((int)(System.currentTimeMillis() / 100L))};
   saveStrings(watchdogFile, out);

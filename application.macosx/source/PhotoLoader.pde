@@ -2,7 +2,7 @@ import org.json.*;
 import java.util.*;
 
 class PhotoLoader implements Runnable {
-  String feed = settings.get("feed-url");
+  String feed = "http://localhost:8080/tag/creators";
   
   Stack<String> photoStack;
   Stack<Boolean> availability;
@@ -14,7 +14,7 @@ class PhotoLoader implements Runnable {
   boolean shouldReset = false;
   
   float lastUpdateTime = 0;
-  int UPDATE_FREQUENCY = int(settings.get("feed-update-period"));  // milliseconds
+  static final int UPDATE_FREQUENCY = 1000;  // milliseconds
   
   boolean initialLoad = true;
   

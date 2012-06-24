@@ -48,17 +48,17 @@ class PhotoArranger {
   float closestZ;
   float farthestZ;
   
-  float HAND_MIN_DISTANCE = float(settings.get("kinect-near"));
-  float HAND_MAX_DISTANCE = float(settings.get("kinect-far"));
-  static final float HAND_MIN_FORCE    = float(settings.get("kinect-min-force"));  // 0.2
-  static final float HAND_MAX_FORCE    = float(settings.get("kinect-max-force"));  // 0.9
+  static final float HAND_MIN_DISTANCE = 2400;
+  static final float HAND_MAX_DISTANCE = 3600;
+  static final float HAND_MIN_FORCE    = 0.005;  // 0.2
+  static final float HAND_MAX_FORCE    = 0.03;  // 0.9
   
   public PhotoArranger(CreatorsKinect applet) {
     this.applet = applet;
     this.loader = new PhotoLoader(this);
     
     physics = new VerletPhysics2D();
-    physics.setDrag(float(settings.get("physics-drag")));
+    physics.setDrag(0.5);
     //physics.setWorldBounds(new Rect(0,0, width, height));
     
     physics.setNumIterations(1);
@@ -98,7 +98,7 @@ class PhotoArranger {
   }
  
   public void setGridDimensions(int rows, int cols) {
-    if(rows < 1 || cols < 1 || rows * cols > 400) return;  // Bounds check
+    if(rows < 1 || cols < 1 || rows * cols > 500) return;  // Bounds check
     
     this.gridRows = rows;
     this.gridCols = cols;

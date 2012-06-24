@@ -38,40 +38,9 @@ int shutdownTimer = 0;
 static final int SHUTDOWN_TIME = 60;
 
 String watchdogFile = "/tmp/watching-the-clock";
-String settingsFile = "settings.conf";
-HashMap<String, String> settings;
 
 void setup() {
   size(screenWidth, screenHeight-1, GLConstants.GLGRAPHICS);
- 
-  // Populate default settings
-  settings = new HashMap<String, String>();
-  settings.put("feed-url", "http://localhost:8080/tag/creators");
-  settings.put("feed-update-period", "1000");
-  settings.put("default-logo", "default.png");
-  settings.put("hashtag-image", "creators-tag.png");
-  settings.put("kinect-near", "2400");
-  settings.put("kinect-far", "3600"); 
-  settings.put("kinect-min-force", "0.005");
-  settings.put("kinect-max-force", "0.03");
-  settings.put("physics-drag", "0.2");
-  settings.put("watchdog-file", "/tmp/watching-the-clock");
-  
-  // Load settings from file
-  String[] settingsLines = loadStrings(settingsFile);
-  if(settingsLines != null && settingsLines.length > 0) {
-    for(int i=0; i<settingsLines.length; i++) {
-      String key, value;
-      String[] split = split(": ", settingsLines[i]);
-      if(split.length > 1) {
-        key = split[0].trim();
-        value = split[1].trim();
-        settings.put(key, value);
-      }  
-    }
-  }
-  
-  watchdogFile = settings.get("watchdog-file");
  
   kinectManager = new KinectManager(this);
   handTracker = new HandTracker(this);
@@ -84,7 +53,7 @@ void setup() {
   infoFont = createFont("Courier Bold", 12);
   textFont(infoFont);
   
-  creatorsTag = new GLTexture(this, settings.get("hashtag-image"));
+  creatorsTag = new GLTexture(this, "creators-tag.png");
 
   photoArranger = new PhotoArranger(this);
   
@@ -103,13 +72,10 @@ void draw(){
   background(0);
   if(frameCount % 3 == 0) staticImageIndex = (int)random(0,staticImages.length);
   image(staticImages[staticImageIndex], 0,0);
-  
-  /*
+
   if(second() < 30)          photoArranger.setMode(2);
   else if(minute() % 2 == 0) photoArranger.setMode(3);
   else                       photoArranger.setMode(4);
-  */
-  photoArranger.setMode(2);
   
   kinectManager.update();
   handTracker.update();
