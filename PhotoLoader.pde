@@ -2,7 +2,7 @@ import org.json.*;
 import java.util.*;
 
 class PhotoLoader implements Runnable {
-  String feed = "http://192.168.1.4:8085/photos";
+  String feed = "http://localhost:8080/tag/creators";
   
   Stack<String> photoStack;
   Stack<Boolean> availability;
@@ -10,7 +10,8 @@ class PhotoLoader implements Runnable {
   
   static final int MIN_STACK_SIZE = 305; //305;
   
-  boolean loading;
+  boolean loading;  
+  boolean shouldReset = false;
   
   float lastUpdateTime = 0;
   static final int UPDATE_FREQUENCY = 1000;  // milliseconds
@@ -25,6 +26,10 @@ class PhotoLoader implements Runnable {
     photoStack =   new Stack<String>();
     availability = new Stack<Boolean>();
     captions =     new Stack<String>();
+  }
+  
+  void reset() {
+    shouldReset = true;   
   }
   
   void update() {
@@ -54,6 +59,17 @@ class PhotoLoader implements Runnable {
   }
   
   void run() {
+    if(shouldReset) {
+      println("Reset photo loader.");
+      photoStack =   new Stack<String>();
+      availability = new Stack<Boolean>();
+      captions =     new Stack<String>();
+
+      initialLoad = true; 
+      
+      shouldReset = false;
+    }
+    
     println("Reloading feed...");
 
     int newPhotos = loadPhotos(feed, 400);

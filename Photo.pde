@@ -102,10 +102,18 @@ class Photo extends VerletParticle2D implements Runnable {
      //texParam.magFilter = GLTextureParameters.LINEAR;
      //texParam.minFilter = GLTextureParameters.LINEAR;
      
-     frontTexture = new GLTexture(parent.applet, "default.jpg", texParam);
-     //println(frontTexture.usingMipmaps() + " using mipmaps");
+     if(defaultTexture == null) {
+       defaultTexture = new GLTexture(parent.applet, "default.jpg", texParam);
+     }
+     
+     
+     //frontTexture = new GLTexture(parent.applet, "default.jpg", texParam);
+     frontTexture = new GLTexture(parent.applet, defaultTexture.width, defaultTexture.height, texParam);
+     frontTexture.copy(defaultTexture);
      frontLoaded = true;
-     backTexture = new GLTexture(parent.applet, "default.jpg", texParam);
+     //backTexture = new GLTexture(parent.applet, "default.jpg", texParam);
+     backTexture = new GLTexture(parent.applet, defaultTexture.width, defaultTexture.height, texParam);
+     backTexture.copy(defaultTexture);
      texturedQuad.setTexture(0, frontTexture);
 
      //gl.setSwapInterval(1); //set vertical sync on     //gl.
@@ -444,7 +452,7 @@ class Photo extends VerletParticle2D implements Runnable {
       if(zoomOnLoad) zoomSoon = true;
       zoomOnLoad = false; 
       
-      backCaption = parent.loader.captions.get(newIndex);
+      //backCaption = parent.loader.captions.get(newIndex);
       
       // Free up the old photo so another space can use it
       int oldIndex = parent.loader.photoStack.indexOf(frontURL);
@@ -471,7 +479,7 @@ class Photo extends VerletParticle2D implements Runnable {
       if(zoomOnLoad) zoomSoon = true;
       zoomOnLoad = false; 
       
-      frontCaption = parent.loader.captions.get(newIndex);
+      //frontCaption = parent.loader.captions.get(newIndex);
       
       // Free up the old photo so another space can use it
       int oldIndex = parent.loader.photoStack.indexOf(backURL);

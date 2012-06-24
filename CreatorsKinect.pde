@@ -7,7 +7,6 @@ import toxi.geom.*;
 
 import SimpleOpenNI.*;
 
-//import processing.opengl.*;
 import codeanticode.glgraphics.*;
 import javax.media.opengl.*;
 import java.util.*;
@@ -17,6 +16,7 @@ HandTracker handTracker;
 
 GLGraphics renderer;
 static GLTexture dropshadowTexture;
+static GLTexture defaultTexture;
 
 PImage[] staticImages;
 int staticImageIndex = 0;
@@ -49,7 +49,7 @@ void setup() {
 
   photoArranger = new PhotoArranger(this);
   
-  frameRate(60);
+  frameRate(30);
 
   // Stop tearing
   GLGraphics pgl = (GLGraphics) g; //processing graphics object
@@ -99,6 +99,11 @@ void draw(){
 }
 
 void keyPressed() {  
+  if(key == ']') photoArranger.setGridDimensions(photoArranger.gridRows + 1, photoArranger.gridCols);
+  if(key == '[') photoArranger.setGridDimensions(photoArranger.gridRows - 1, photoArranger.gridCols);
+  if(key == '\'') photoArranger.setGridDimensions(photoArranger.gridRows, photoArranger.gridCols + 1);
+  if(key == ';') photoArranger.setGridDimensions(photoArranger.gridRows, photoArranger.gridCols - 1);
+  
   if(key == '.') kinectManager.depthThreshold += 20;
   if(key == ',') kinectManager.depthThreshold -= 20;
   switch(key) {

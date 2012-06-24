@@ -1,5 +1,3 @@
-
-
 class PhotoArranger {
   PVector center;
   PVector centerTarget;
@@ -30,7 +28,7 @@ class PhotoArranger {
   float entrancePause = 0.5;
   float entrancePhotoSize = 6;
   
-  int photoCount = 135; // 135
+  int photoCount = 84; // 135
   
   PhotoLoader loader;
   CreatorsKinect applet;
@@ -43,8 +41,8 @@ class PhotoArranger {
   int mode = BULGE_MODE;
   boolean convey = true;
   
-  int gridRows = 9;
-  int gridCols = 15;
+  public int gridRows = 7;  // 9
+  public int gridCols = 12; // 15
   float gridSpacing;
   
   float closestZ;
@@ -75,17 +73,6 @@ class PhotoArranger {
     entranceAnchor = new VerletParticle2D(width/2, height/2);
     entranceAnchor.lock();
     
-    if(mode == CONVEYOR_MODE) {
-      for(int r=2; r<gridRows; r++) {
-        for(int c=0; c<gridCols; c++) {
-          AttractionBehavior a = new AttractionBehavior(new Vec2D((r+0.5)*gridSpacing, (c+0.5)*gridSpacing),
-                                                        gridSpacing, 0.05);
-          gridpointAttractors.add(a);  
-          physics.addBehavior(a);
-        }
-      }
-    }
-    
     noise = new PerlinNoise();
     
     photos = new ArrayList<Photo>(photoCount);
@@ -109,6 +96,74 @@ class PhotoArranger {
       photoBaseSprings.add(spring);
     }
   }
+ 
+  public void setGridDimensions(int rows, int cols) {
+    if(rows < 1 || cols < 1 || rows * cols > 500) return;  // Bounds check
+    
+    this.gridRows = rows;
+    this.gridCols = cols;
+    int oldPhotoCount = photoCount;
+    this.photoCount = rows * cols;
+    this.gridSpacing = width / (float)gridCols;
+    if(photoCount < oldPhotoCount) {
+      // Fewer photos to display, so remove some from the array list
+      ArrayList<Photo> photosToKeep = new ArrayList<Photo>(photoCount);
+      ArrayList<VerletParticle2D> basesToKeep = new ArrayList<VerletParticle2D>(photoCount);
+      ArrayList<VerletSpring2D> springsToKeep = new ArrayList<VerletSpring2D>(photoCount);
+      
+      for(int i=0; i<photos.size(); i++) {
+        if(photos.get(i).id < photoCount) {
+          photosToKeep.add(photos.get(i));
+          basesToKeep.add(photoBaseParticles.get(i));
+          springsToKeep.add(photoBaseSprings.get(i));
+        }
+      }
+      
+      photos = photosToKeep;
+      photoBaseParticles = basesToKeep;
+      photoBaseSprings = springsToKeep;
+      
+      /*
+      for(int i=0; i<photos.size(); i++) {
+        if(photos.get(i).id >= photoCount) {
+          photos.remove(i);
+          photoBaseParticles.remove(i);
+          photoBaseSprings.remove(i);  
+        }
+      }
+      */
+    }
+    else {
+      // More photos on the grid, so add some to the list
+      for(int i=oldPhotoCount; i<photoCount; i++) {
+        Photo p = new Photo(this, "", gridSpacing,
+                            (i%gridCols + 0.5) * gridSpacing, (i/gridCols + 0.5) * gridSpacing);
+        p.id = i;
+        
+        VerletParticle2D base = new VerletParticle2D((i%gridCols + 0.5) * gridSpacing, (i/gridCols + 0.5) * gridSpacing);
+        base.lock();
+        VerletSpring2D spring = new VerletSpring2D(base, p, 0, BASE_SPRING_STRENGTH * random(0.5, 2));
+        //p.positionTarget = new PVector((i%gridCols + 0.5) * gridSpacing, (i/gridCols + 0.5) * gridSpacing, 0);
+        physics.addParticle(p);
+        physics.addParticle(base);
+        physics.addSpring(spring);
+        photos.add(p);
+        photoBaseParticles.add(base);
+        photoBaseSprings.add(spring);        
+      }      
+    }
+    
+    // Move the base particles into their new positions
+    for(int i=0; i<photoBaseParticles.size(); i++) {
+      int id = photos.get(i).id;
+      photoBaseParticles.get(i).set((id%gridCols + 0.5) * gridSpacing, (id/gridCols + 0.5) * gridSpacing);
+      photos.get(i).set((id%gridCols + 0.5) * gridSpacing, (id/gridCols + 0.5) * gridSpacing);
+      photos.get(i).size = gridSpacing;
+      photos.get(i).clearVelocity();
+    }
+    
+    loader.reset();
+  }
   
   void setMode(int mode) {
     if(mode == 1) return;
@@ -124,28 +179,7 @@ class PhotoArranger {
       _p = photos.get(i);
       _p.update();
 
-      if(mode == CONVEYOR_MODE) {
-        if(_p.y > 200) {
-          photoBaseSprings.get(i).setStrength(0); 
-          _p.size = gridSpacing * (1+(_p.y - 200)/100.);
-          _p.size = constrain(_p.size, gridSpacing, gridSpacing * 3);
-          
-          if(!activePhotos.contains(_p)) activePhotos.add(_p);
-        }
-        else {
-          photoBaseSprings.get(i).setStrength(BASE_SPRING_STRENGTH);
-          if(activePhotos.contains(_p)) activePhotos.remove(activePhotos.indexOf(_p));
-        }
-        
-        if(convey) {
-          photoBaseParticles.get(i).x += 1;
-          if(photoBaseParticles.get(i).x > width) {
-            photoBaseParticles.get(i).x = 0;  
-            if(!activePhotos.contains(_p)) _p.x = 0;
-          }
-        }
-      }
-      else if(mode == WAVE_MODE) {
+      if(mode == WAVE_MODE) {
         VerletSpring2D s = photoBaseSprings.get(i);
         float displacement = s.a.distanceTo(s.b);
         _p.angleYTarget = (s.a.x - s.b.x);

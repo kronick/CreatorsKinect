@@ -1,4 +1,6 @@
-class KinectManager {
+import SimpleOpenNI.*;
+
+public class KinectManager {
   SimpleOpenNI kinect;
   
   // NITE
@@ -7,7 +9,7 @@ class KinectManager {
   PointDrawer       pointDrawer;
   
   CreatorsKinect applet;
-  boolean simulate = false;
+  boolean simulate = true;
   
   ArrayList<ScanLine> scanLines;
   PVector handPosition, oldHandPosition;
