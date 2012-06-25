@@ -1,4 +1,0 @@
-#!/bin/sh
-
-APPDIR=$(dirname "$0")
-java  -Djava.library.path="$APPDIR" -cp "$APPDIR/lib/CreatorsKinect.jar:$APPDIR/lib/core.jar:$APPDIR/lib/verletphysics.jar:$APPDIR/lib/verletphysics.jar:$APPDIR/lib/verletphysics.jar:$APPDIR/lib/verletphysics.jar:$APPDIR/lib/verletphysics.jar:$APPDIR/lib/toxiclibscore.jar:$APPDIR/lib/SimpleOpenNI.jar:$APPDIR/lib/GLGraphics.jar:$APPDIR/lib/opengl.jar:$APPDIR/lib/jogl.jar:$APPDIR/lib/gluegen-rt.jar:$APPDIR/lib/toxiclibscore.jar:$APPDIR/lib/SimpleOpenNI.jar:$APPDIR/lib/json.jar" CreatorsKinect

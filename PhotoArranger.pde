@@ -28,8 +28,6 @@ class PhotoArranger {
   float entrancePause = 0.5;
   float entrancePhotoSize = 6;
   
-  int photoCount = 84; // 135
-  
   PhotoLoader loader;
   CreatorsKinect applet;
   
@@ -41,8 +39,9 @@ class PhotoArranger {
   int mode = BULGE_MODE;
   boolean convey = true;
   
-  public int gridRows = 7;  // 9
-  public int gridCols = 12; // 15
+  public int gridRows = int(settings.get("grid-rows"));  // 9
+  public int gridCols = int(settings.get("grid-cols")); // 15
+  public int photoCount = gridRows * gridCols; // 135
   float gridSpacing;
   
   float closestZ;
@@ -50,8 +49,8 @@ class PhotoArranger {
   
   float HAND_MIN_DISTANCE = float(settings.get("kinect-near"));
   float HAND_MAX_DISTANCE = float(settings.get("kinect-far"));
-  static final float HAND_MIN_FORCE    = float(settings.get("kinect-min-force"));  // 0.2
-  static final float HAND_MAX_FORCE    = float(settings.get("kinect-max-force"));  // 0.9
+  float HAND_MIN_FORCE    = float(settings.get("kinect-min-force"));  // 0.2
+  float HAND_MAX_FORCE    = float(settings.get("kinect-max-force"));  // 0.9
   
   public PhotoArranger(CreatorsKinect applet) {
     this.applet = applet;

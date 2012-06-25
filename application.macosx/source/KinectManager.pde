@@ -9,7 +9,7 @@ public class KinectManager {
   PointDrawer       pointDrawer;
   
   CreatorsKinect applet;
-  boolean simulate = true;
+  boolean simulate = false;
   
   ArrayList<ScanLine> scanLines;
   PVector handPosition, oldHandPosition;
@@ -17,7 +17,7 @@ public class KinectManager {
   float scaleFactor = 1;
   
   PImage depthMap;
-  int depthThreshold = 3600;
+  int depthThreshold = int(settings.get("kinect-far"));
   
   public KinectManager(CreatorsKinect applet) {
     this.applet = applet;

@@ -28,8 +28,6 @@ class PhotoArranger {
   float entrancePause = 0.5;
   float entrancePhotoSize = 6;
   
-  int photoCount = 84; // 135
-  
   PhotoLoader loader;
   CreatorsKinect applet;
   
@@ -41,24 +39,25 @@ class PhotoArranger {
   int mode = BULGE_MODE;
   boolean convey = true;
   
-  public int gridRows = 7;  // 9
-  public int gridCols = 12; // 15
+  public int gridRows = int(settings.get("grid-rows"));  // 9
+  public int gridCols = int(settings.get("grid-cols")); // 15
+  public int photoCount = gridRows * gridCols; // 135
   float gridSpacing;
   
   float closestZ;
   float farthestZ;
   
-  static final float HAND_MIN_DISTANCE = 2400;
-  static final float HAND_MAX_DISTANCE = 3600;
-  static final float HAND_MIN_FORCE    = 0.005;  // 0.2
-  static final float HAND_MAX_FORCE    = 0.03;  // 0.9
+  float HAND_MIN_DISTANCE = float(settings.get("kinect-near"));
+  float HAND_MAX_DISTANCE = float(settings.get("kinect-far"));
+  float HAND_MIN_FORCE    = float(settings.get("kinect-min-force"));  // 0.2
+  float HAND_MAX_FORCE    = float(settings.get("kinect-max-force"));  // 0.9
   
   public PhotoArranger(CreatorsKinect applet) {
     this.applet = applet;
     this.loader = new PhotoLoader(this);
     
     physics = new VerletPhysics2D();
-    physics.setDrag(0.5);
+    physics.setDrag(float(settings.get("physics-drag")));
     //physics.setWorldBounds(new Rect(0,0, width, height));
     
     physics.setNumIterations(1);
@@ -98,7 +97,7 @@ class PhotoArranger {
   }
  
   public void setGridDimensions(int rows, int cols) {
-    if(rows < 1 || cols < 1 || rows * cols > 500) return;  // Bounds check
+    if(rows < 1 || cols < 1 || rows * cols > 400) return;  // Bounds check
     
     this.gridRows = rows;
     this.gridCols = cols;

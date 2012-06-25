@@ -9,7 +9,7 @@ public class KinectManager {
   PointDrawer       pointDrawer;
   
   CreatorsKinect applet;
-  boolean simulate = true;
+  boolean simulate = false;
   
   ArrayList<ScanLine> scanLines;
   PVector handPosition, oldHandPosition;

@@ -11,6 +11,10 @@ import codeanticode.glgraphics.*;
 import javax.media.opengl.*;
 import java.util.*;
 
+import controlP5.*;
+ControlP5 cp5;
+boolean configuring;
+
 KinectManager kinectManager;
 HandTracker handTracker;
 
@@ -18,7 +22,7 @@ GLGraphics renderer;
 static GLTexture dropshadowTexture;
 static GLTexture defaultTexture;
 
-PImage[] staticImages;
+GLTexture[] staticImages;
 int staticImageIndex = 0;
 
 PFont infoFont;
@@ -32,28 +36,35 @@ boolean showHashtag = true;
 PhotoArranger photoArranger;
 
 boolean simulateFreeze = false;
+boolean startingUp = true;
 boolean shuttingDown = false;
 boolean restarting = false;
-int shutdownTimer = 0;
-static final int SHUTDOWN_TIME = 60;
+static final int SHUTDOWN_TIME = 120;
+int shutdownTimer = SHUTDOWN_TIME;
 
 String watchdogFile = "/tmp/watching-the-clock";
+String settingsFile = "settings.conf";
+HashMap<String, String> settings;
 
 void setup() {
   size(screenWidth, screenHeight-1, GLConstants.GLGRAPHICS);
  
+  loadSettings();
+  setupConfigScreen();
+  
+  watchdogFile = settings.get("watchdog-file");
+ 
   kinectManager = new KinectManager(this);
   handTracker = new HandTracker(this);
  
-  generateStatic();
+  //generateStatic();
  
-  background(200,0,0);
   //size(kinect.depthWidth(), kinect.depthHeight());
   
   infoFont = createFont("Courier Bold", 12);
   textFont(infoFont);
   
-  creatorsTag = new GLTexture(this, "creators-tag.png");
+  creatorsTag = new GLTexture(this, settings.get("hashtag-image"));
 
   photoArranger = new PhotoArranger(this);
   
@@ -62,6 +73,7 @@ void setup() {
   // Stop tearing
   GLGraphics pgl = (GLGraphics) g; //processing graphics object
   GL gl = pgl.beginGL(); //begin opengl
+  background(0);
   gl.setSwapInterval(1); //set vertical sync on
   pgl.endGL(); //end opengl
 }
@@ -70,9 +82,13 @@ void draw(){
   //println(frameRate);
   keepAlive();
   background(0);
+  /*
   if(frameCount % 3 == 0) staticImageIndex = (int)random(0,staticImages.length);
-  image(staticImages[staticImageIndex], 0,0);
-
+   colorMode(RGB);
+  tint(1,1,1,1);
+  staticImages[staticImageIndex].render();
+  */
+  
   if(second() < 30)          photoArranger.setMode(2);
   else if(minute() % 2 == 0) photoArranger.setMode(3);
   else                       photoArranger.setMode(4);
@@ -80,22 +96,10 @@ void draw(){
   kinectManager.update();
   handTracker.update();
   
-  /*
-  ArrayList<Vec3D> handPositions = new ArrayList<Vec3D>();
-  handPositions.add(new Vec3D(kinectManager.handPosition.x*2, kinectManager.handPosition.y*2, 0));
-  photoArranger.updateHands(handPositions);
-  */
- 
-  
-  //pushMatrix();
-  //scale(2);
-  //stroke(255,0,128);
   kinectManager.draw();
-  //popMatrix();
   
-  handTracker.draw();
-  
-   renderer = (GLGraphics)g;
+  handTracker.draw();  
+  renderer = (GLGraphics)g;
   renderer.beginGL();
     photoArranger.update();
     photoArranger.draw();
@@ -103,29 +107,28 @@ void draw(){
   
   if(showHashtag) drawHashtag();
   
+  updateConfigScreen();
+  if(configuring) { cursor(); drawConfigScreen(); cp5.show(); }
+  else { noCursor(); cp5.hide(); }
   
-  if(shuttingDown || restarting) {
+  if(startingUp || shuttingDown || restarting) {
     fill(0,0,0, shutdownTimer / (float)SHUTDOWN_TIME * 255);
     rect(0,0,width,height);
-    shutdownTimer++;
+    
+    if(startingUp) shutdownTimer--;
+    else shutdownTimer++;
+    
     if(shutdownTimer > SHUTDOWN_TIME) {
       if(shuttingDown) safeShutdown();  
       else if(restarting) safeRestart();
     }
+    if(shutdownTimer <= 0 && startingUp)
+      startingUp = false;
   }
-  //text(frameRate, 20,20);
-  
 }
 
-void keyPressed() {  
-  if(key == ']') photoArranger.setGridDimensions(photoArranger.gridRows + 1, photoArranger.gridCols);
-  if(key == '[') photoArranger.setGridDimensions(photoArranger.gridRows - 1, photoArranger.gridCols);
-  if(key == '\'') photoArranger.setGridDimensions(photoArranger.gridRows, photoArranger.gridCols + 1);
-  if(key == ';') photoArranger.setGridDimensions(photoArranger.gridRows, photoArranger.gridCols - 1);
-  
-  if(key == '.') kinectManager.depthThreshold += 20;
-  if(key == ',') kinectManager.depthThreshold -= 20;
-  
+void keyPressed() {    
+  if(configuring) return;
   switch(key) {
     case '1':
       photoArranger.setMode(1);
@@ -159,21 +162,35 @@ void keyPressed() {
     case 'r':
       restarting = true;
       break;    
+    case ' ':
+      configuring = !configuring;
+      break;
   }
+  if(key == ']') photoArranger.setGridDimensions(photoArranger.gridRows + 1, photoArranger.gridCols);
+  if(key == '[') photoArranger.setGridDimensions(photoArranger.gridRows - 1, photoArranger.gridCols);
+  if(key == '\'') photoArranger.setGridDimensions(photoArranger.gridRows, photoArranger.gridCols + 1);
+  if(key == ';') photoArranger.setGridDimensions(photoArranger.gridRows, photoArranger.gridCols - 1);
+  
+  if(key == '.') kinectManager.depthThreshold += 20;
+  if(key == ',') kinectManager.depthThreshold -= 20;
 }
 
 void generateStatic() {
-  staticImages = new PImage[10];
+  /*
+  staticImages = new GLTexture[10];
   int gray = 0;
   for(int i=0; i<staticImages.length; i++) {
-    staticImages[i] = createImage(width, height, RGB);
-    staticImages[i].loadPixels();
-    for(int p=0; p<staticImages[i].pixels.length; p++) {
+    PImage s = createImage(width, height, RGB);
+    s.loadPixels();
+    for(int p=0; p<s.pixels.length; p++) {
       gray = (int)random(0,100);
-      staticImages[i].pixels[p] = color(gray, gray, gray);
+      s.pixels[p] = color(gray, gray, gray);
     }
-    staticImages[i].updatePixels();
-  }  
+    s.updatePixels();
+    staticImages[i] = new GLTexture(this);
+    staticImages[i].putImage(s);
+  } 
+ */ 
 }
 
 void drawHashtag() {

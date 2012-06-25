@@ -1,3 +1,0 @@
- -Xms64m -Xmx1024m
-CreatorsKinect
-CreatorsKinect.jar,core.jar,verletphysics.jar,verletphysics.jar,verletphysics.jar,verletphysics.jar,verletphysics.jar,toxiclibscore.jar,SimpleOpenNI.jar,GLGraphics.jar,opengl.jar,jogl.jar,gluegen-rt.jar,toxiclibscore.jar,SimpleOpenNI.jar,json.jar
